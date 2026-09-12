@@ -22,6 +22,8 @@ const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 
 let cfg = { groom:"เจ้าบ่าว", bride:"เจ้าสาว", date:"", venue:"", budget:0, target:0 };
 let tasks = [], guests = [], costs = [];
 let taskFilter = "all", guestGroup = "__all", guestQuery = "";
+let guestSort = { k: null, d: 1 };
+let costSort  = { k: null, d: 1 };
 let ready = false;
 
 /* ---------- gate ---------- */
@@ -187,6 +189,31 @@ function renderTasks() {
   host.innerHTML = html || '<div class="phase"><div class="empty">ไม่มีรายการในตัวกรองนี้</div></div>';
 }
 
+/* ---------- การเรียงลำดับตามหัวคอลัมน์ ---------- */
+const collator = new Intl.Collator("th", { numeric: true, sensitivity: "base" });
+const NUM_KEYS = ["seats", "gift", "estimate", "deposit", "actual", "order"];
+const RSVP_RANK = { "มา": 0, "รอตอบ": 1, "ไม่มา": 2 };
+
+function sortRows(list, sort) {
+  if (!sort.k) return list;
+  return list.slice().sort((x, y) => {
+    let r;
+    if (sort.k === "rsvp") r = (RSVP_RANK[x.rsvp] ?? 9) - (RSVP_RANK[y.rsvp] ?? 9);
+    else if (NUM_KEYS.includes(sort.k)) r = n(x[sort.k]) - n(y[sort.k]);
+    else r = collator.compare(String(x[sort.k] ?? ""), String(y[sort.k] ?? ""));
+    return r * sort.d;
+  });
+}
+function paintHeaders(tableId, sort) {
+  document.querySelectorAll("#" + tableId + " th[data-sort]").forEach(th => {
+    const on = th.dataset.sort === sort.k;
+    th.classList.toggle("sorted", on);
+    const a = th.querySelector(".arw");
+    if (a) a.textContent = on ? (sort.d === 1 ? "\u25B2" : "\u25BC") : "\u2195";
+    th.setAttribute("aria-sort", on ? (sort.d === 1 ? "ascending" : "descending") : "none");
+  });
+}
+
 /* ---------- guests ---------- */
 const RSVP = ["รอตอบ", "มา", "ไม่มา"];
 
@@ -227,9 +254,11 @@ function renderGuests() {
   const list = guests.filter(g =>
     (guestGroup === "__all" || (guestGroup === "__dup" ? dup.ids.has(g.id) : g.group === guestGroup)) &&
     (!q || (g.name || "").toLowerCase().includes(q) || (g.group || "").toLowerCase().includes(q)));
+  const shown = sortRows(list, guestSort);
+  paintHeaders("guestTable", guestSort);
 
   const body = $("guestBody");
-  body.innerHTML = list.length ? list.map(g => `<tr class="${dup.ids.has(g.id) ? "dup" : ""}">
+  body.innerHTML = shown.length ? shown.map(g => `<tr class="${dup.ids.has(g.id) ? "dup" : ""}">
     <td><div class="namecell"><input class="cell" id="gn-${g.id}" data-f="guests:${g.id}:name" value="${esc(g.name)}" placeholder="ชื่อ">${
       dup.ids.has(g.id) ? `<span class="dupbadge" title="ชื่อนี้ปรากฏใน ${esc([...new Set(dup.where[dupKey(g.name)])].join(", "))}">ซ้ำ ${dup.count[dupKey(g.name)]}</span>` : ""}</div></td>
     <td><select class="cell" id="gs-${g.id}" data-f="guests:${g.id}:side">
@@ -253,7 +282,10 @@ function renderGuests() {
 
 /* ---------- budget ---------- */
 function renderCosts() {
-  const list = costs.slice().sort((a, b) => n(a.order) - n(b.order));
+  const list = costSort.k
+    ? sortRows(costs, costSort)
+    : costs.slice().sort((a, b) => n(a.order) - n(b.order));
+  paintHeaders("costTable", costSort);
   $("costBody").innerHTML = list.length ? list.map(c => `<tr>
     <td><input class="cell" id="cc-${c.id}" data-f="costs:${c.id}:category" value="${esc(c.category)}" style="font-size:12.5px"></td>
     <td><input class="cell" id="ci-${c.id}" data-f="costs:${c.id}:item" value="${esc(c.item)}"></td>
@@ -280,6 +312,16 @@ function renderAll() {
 
 /* ---------- events ---------- */
 document.addEventListener("click", (e) => {
+  const th = e.target.closest("th[data-sort]");
+  if (th) {
+    const k = th.dataset.sort;
+    const isGuest = !!th.closest("#guestTable");
+    const sort = isGuest ? guestSort : costSort;
+    if (sort.k === k) { if (sort.d === 1) sort.d = -1; else { sort.k = null; sort.d = 1; } }
+    else { sort.k = k; sort.d = 1; }
+    isGuest ? renderGuests() : renderCosts();
+    return;
+  }
   const t = e.target.closest("button"); if (!t) return;
   if (t.dataset.toggle) { const r = tasks.find(x => x.id === t.dataset.toggle); if (r) put("tasks", r.id, { done: !r.done }); return; }
   if (t.dataset.del) { const [c, id] = t.dataset.del.split(":"); if (confirm("ลบรายการนี้?")) remove(c, id); return; }
