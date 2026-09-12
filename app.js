@@ -189,20 +189,49 @@ function renderTasks() {
 
 /* ---------- guests ---------- */
 const RSVP = ["รอตอบ", "มา", "ไม่มา"];
+
+/* คีย์เทียบชื่อซ้ำ: ตัดช่องว่างเกิน วงเล็บท้ายชื่อ และ x ท้ายชื่อออก
+   ทำให้ "พี่เอ๋" กับ "พี่เอ๋ (2)" หรือ "พี่ขวัญ x" ถูกจับเป็นชื่อเดียวกัน
+   แต่ "ญาติพ่อ 1" กับ "ญาติพ่อ 2" ยังถือว่าคนละคน */
+const dupKey = (s) => String(s ?? "").trim().toLowerCase()
+  .replace(/\s+/g, " ")
+  .replace(/\s*\([^)]*\)\s*$/, "")
+  .replace(/\s+x$/, "");
+
+function dupInfo() {
+  const count = {}, where = {};
+  guests.forEach(g => {
+    const k = dupKey(g.name); if (!k) return;
+    count[k] = (count[k] || 0) + 1;
+    (where[k] = where[k] || []).push(g.group || "ไม่ระบุกลุ่ม");
+  });
+  const ids = new Set(guests.filter(g => count[dupKey(g.name)] > 1).map(g => g.id));
+  return { count, where, ids };
+}
+function warnDup(name, selfId) {
+  const k = dupKey(name); if (!k) return;
+  const others = guests.filter(g => g.id !== selfId && dupKey(g.name) === k);
+  if (!others.length) return;
+  const groups = [...new Set(others.map(o => o.group || "ไม่ระบุกลุ่ม"))].join(", ");
+  toast("ชื่อ “" + name + "” ซ้ำกับที่มีอยู่แล้วใน " + groups);
+}
 function renderGuests() {
+  const dup = dupInfo();
   const groups = [...new Set(guests.map(g => g.group).filter(Boolean))].sort();
   $("guestGroups").innerHTML =
     `<button class="chip" data-grp="__all" aria-pressed="${guestGroup === "__all"}">ทั้งหมด</button>` +
+    (dup.ids.size ? `<button class="chip warn" data-grp="__dup" aria-pressed="${guestGroup === "__dup"}">⚠ ชื่อซ้ำ <span class="num">${dup.ids.size}</span></button>` : "") +
     groups.map(g => `<button class="chip" data-grp="${esc(g)}" aria-pressed="${guestGroup === g}">${esc(g)} <span class="num">${guests.filter(x => x.group === g).length}</span></button>`).join("");
 
   const q = guestQuery.trim().toLowerCase();
   const list = guests.filter(g =>
-    (guestGroup === "__all" || g.group === guestGroup) &&
+    (guestGroup === "__all" || (guestGroup === "__dup" ? dup.ids.has(g.id) : g.group === guestGroup)) &&
     (!q || (g.name || "").toLowerCase().includes(q) || (g.group || "").toLowerCase().includes(q)));
 
   const body = $("guestBody");
-  body.innerHTML = list.length ? list.map(g => `<tr>
-    <td><input class="cell" id="gn-${g.id}" data-f="guests:${g.id}:name" value="${esc(g.name)}" placeholder="ชื่อ"></td>
+  body.innerHTML = list.length ? list.map(g => `<tr class="${dup.ids.has(g.id) ? "dup" : ""}">
+    <td><div class="namecell"><input class="cell" id="gn-${g.id}" data-f="guests:${g.id}:name" value="${esc(g.name)}" placeholder="ชื่อ">${
+      dup.ids.has(g.id) ? `<span class="dupbadge" title="ชื่อนี้ปรากฏใน ${esc([...new Set(dup.where[dupKey(g.name)])].join(", "))}">ซ้ำ ${dup.count[dupKey(g.name)]}</span>` : ""}</div></td>
     <td><select class="cell" id="gs-${g.id}" data-f="guests:${g.id}:side">
       ${["เจ้าบ่าว","เจ้าสาว"].map(s => `<option${g.side === s ? " selected" : ""}>${s}</option>`).join("")}</select></td>
     <td><input class="cell" id="gg-${g.id}" data-f="guests:${g.id}:group" value="${esc(g.group)}" placeholder="กลุ่ม"></td>
@@ -284,6 +313,7 @@ document.addEventListener("change", (e) => {
     const numeric = rawField.endsWith("#");
     const field = numeric ? rawField.slice(0, -1) : rawField;
     put(c, id, { [field]: numeric ? n(el.value) : el.value });
+    if (c === "guests" && field === "name") warnDup(el.value, id);
   }
 });
 $("guestSearch")?.addEventListener("input", (e) => { guestQuery = e.target.value; renderGuests(); });
