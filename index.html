@@ -120,6 +120,11 @@ td.r,th.r,tfoot td.r{text-align:right}
 .namecell{display:flex;align-items:center;gap:6px}
 tr.dup td:first-child{box-shadow:inset 3px 0 0 var(--warn)}
 .dupbadge{flex:none;font-size:10.5px;font-weight:600;color:var(--warn);border:1px solid var(--warn);border-radius:999px;padding:1px 7px;white-space:nowrap}
+th.sortable{cursor:pointer;user-select:none}
+th.sortable:hover{color:var(--ink-2)}
+th.sortable .arw{margin-left:4px;font-size:9px;opacity:.35}
+th.sorted{color:var(--ink)}
+th.sorted .arw{opacity:1;color:var(--gold)}
 
 dialog{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:14px;padding:0;width:min(420px,calc(100vw - 32px))}
 dialog::backdrop{background:rgba(10,18,15,.5)}
@@ -194,10 +199,15 @@ dialog::backdrop{background:rgba(10,18,15,.5)}
     </div>
     <div class="grpbar" id="guestGroups"></div>
     <div class="tablewrap">
-      <table>
+      <table id="guestTable">
         <thead><tr>
-          <th style="width:26%">ชื่อ</th><th style="width:11%">ฝ่าย</th><th style="width:20%">กลุ่ม</th>
-          <th class="r" style="width:9%">ที่นั่ง</th><th style="width:13%">ตอบรับ</th><th class="r" style="width:13%">ซอง</th><th style="width:6%"></th>
+          <th class="sortable" data-sort="name" style="width:26%">ชื่อ<span class="arw">↕</span></th>
+          <th class="sortable" data-sort="side" style="width:11%">ฝ่าย<span class="arw">↕</span></th>
+          <th class="sortable" data-sort="group" style="width:20%">กลุ่ม<span class="arw">↕</span></th>
+          <th class="r sortable" data-sort="seats" style="width:9%">ที่นั่ง<span class="arw">↕</span></th>
+          <th class="sortable" data-sort="rsvp" style="width:13%">ตอบรับ<span class="arw">↕</span></th>
+          <th class="r sortable" data-sort="gift" style="width:13%">ซอง<span class="arw">↕</span></th>
+          <th style="width:6%"></th>
         </tr></thead>
         <tbody id="guestBody"></tbody>
         <tfoot><tr>
@@ -217,10 +227,15 @@ dialog::backdrop{background:rgba(10,18,15,.5)}
       <button class="btn" data-export="costs">ดาวน์โหลด CSV</button>
     </div>
     <div class="tablewrap">
-      <table>
+      <table id="costTable">
         <thead><tr>
-          <th style="width:15%">หมวด</th><th style="width:25%">รายการ</th><th style="width:16%">ผู้ให้บริการ</th>
-          <th class="r" style="width:13%">ประมาณการ</th><th class="r" style="width:13%">มัดจำแล้ว</th><th class="r" style="width:13%">จ่ายจริง</th><th style="width:5%"></th>
+          <th class="sortable" data-sort="category" style="width:15%">หมวด<span class="arw">↕</span></th>
+          <th class="sortable" data-sort="item" style="width:25%">รายการ<span class="arw">↕</span></th>
+          <th class="sortable" data-sort="vendor" style="width:16%">ผู้ให้บริการ<span class="arw">↕</span></th>
+          <th class="r sortable" data-sort="estimate" style="width:13%">ประมาณการ<span class="arw">↕</span></th>
+          <th class="r sortable" data-sort="deposit" style="width:13%">มัดจำแล้ว<span class="arw">↕</span></th>
+          <th class="r sortable" data-sort="actual" style="width:13%">จ่ายจริง<span class="arw">↕</span></th>
+          <th style="width:5%"></th>
         </tr></thead>
         <tbody id="costBody"></tbody>
         <tfoot><tr><td colspan="3">รวมทั้งหมด</td>
@@ -245,6 +260,6 @@ dialog::backdrop{background:rgba(10,18,15,.5)}
 </form></dialog>
 
 <div id="toast" role="status"></div>
-<script type="module" src="./app.js"></script>
+<script type="module" src="./app.js?v=3"></script>
 </body>
 </html>
