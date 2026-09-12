@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ขันหมากพร้อม — แผนงานแต่งบาส & ตาล</title>
+<meta name="theme-color" content="#164C3F">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chonburi&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --ground:#F1F4EF; --surface:#FFFFFF; --surface-2:#E7EBE4; --sunk:#DDE3DA;
+  --ink:#15201B; --ink-2:#4A5A51; --ink-3:#7B8B82;
+  --line:#D3DAD1; --line-strong:#B6C0B4;
+  --gold:#8E6D1C; --gold-bg:#F3E9CE;
+  --lacquer:#164C3F; --lacquer-bg:#DCE9E3; --on-lacquer:#FFFFFF;
+  --ok:#2C7A58; --warn:#A87A16; --over:#A93744;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#0F1513; --surface:#171E1B; --surface-2:#1E2724; --sunk:#131A17;
+    --ink:#E8ECE7; --ink-2:#A6B3AB; --ink-3:#74837A;
+    --line:#2A3431; --line-strong:#3C4844;
+    --gold:#D6B462; --gold-bg:#33290F;
+    --lacquer:#67C3A9; --lacquer-bg:#152A25; --on-lacquer:#0F1513;
+    --ok:#5FC495; --warn:#DFB055; --over:#E4707C;
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--ground); color:var(--ink);
+  font-family:"IBM Plex Sans Thai","Noto Sans Thai",system-ui,sans-serif; font-size:15px; line-height:1.6}
+.num{font-family:"IBM Plex Mono",ui-monospace,monospace; font-variant-numeric:tabular-nums}
+button{font:inherit;color:inherit;cursor:pointer}
+input,select{font:inherit;color:inherit}
+.wrap{max-width:1080px;margin:0 auto;padding-inline:16px;padding-block:22px 90px}
+
+/* gate */
+#gate{position:fixed;inset:0;background:var(--ground);display:grid;place-items:center;padding:24px;z-index:50}
+.gatecard{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:28px 24px;max-width:380px;width:100%;text-align:center}
+.gatecard h1{font-family:"Chonburi",serif;font-weight:400;font-size:26px;margin:0 0 6px}
+.gatecard p{color:var(--ink-3);font-size:13.5px;margin:0 0 18px}
+.gatecard input{width:100%;background:var(--ground);border:1px solid var(--line);border-radius:10px;padding:11px 12px;text-align:center;letter-spacing:.08em}
+.gatecard button{width:100%;margin-top:12px;background:var(--lacquer);color:var(--on-lacquer);border:none;border-radius:10px;padding:11px;font-weight:600}
+#gateErr{color:var(--over);font-size:13px;min-height:20px;margin-top:8px}
+
+header .eyebrow{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);font-weight:600}
+h1.title{font-family:"Chonburi",Georgia,serif;font-weight:400;font-size:clamp(26px,6vw,42px);line-height:1.3;margin:8px 0 0;text-wrap:balance}
+h1.title .amp{color:var(--gold);padding-inline:6px}
+.meta{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline;margin-top:10px;color:var(--ink-2);font-size:13.5px}
+.dot{color:var(--line-strong)}
+.linkbtn{background:none;border:none;padding:0;color:var(--lacquer);text-decoration:underline;text-underline-offset:3px;font-size:13.5px}
+#who{font-size:12px;color:var(--ink-3)}
+
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-top:20px}
+@media (max-width:640px){.stats{grid-template-columns:repeat(2,1fr)}}
+.stat{background:var(--surface);padding:13px 14px 15px}
+.stat .k{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
+.stat .v{font-size:24px;font-weight:600;margin-top:3px}
+.stat .v small{font-size:12.5px;font-weight:500;color:var(--ink-3)}
+.stat .s{font-size:11.5px;color:var(--ink-2);margin-top:2px}
+.bar{height:4px;background:var(--sunk);border-radius:999px;margin-top:8px;overflow:hidden}
+.bar>i{display:block;height:100%;background:var(--lacquer)}
+.bar.gold>i{background:var(--gold)} .bar.over>i{background:var(--over)}
+
+.tabs{display:flex;gap:2px;margin-top:22px;border-bottom:1px solid var(--line);overflow-x:auto}
+.tab{background:none;border:none;border-bottom:2px solid transparent;padding:9px 13px;margin-bottom:-1px;color:var(--ink-3);font-weight:600;font-size:14px;white-space:nowrap}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--gold)}
+.panel{margin-top:18px}
+.panel[hidden]{display:none!important}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px}
+.spacer{flex:1}
+.btn{background:var(--surface);border:1px solid var(--line-strong);border-radius:8px;padding:6px 12px;font-size:13.5px;font-weight:600;color:var(--ink-2)}
+.btn.primary{background:var(--lacquer);border-color:var(--lacquer);color:var(--on-lacquer)}
+.seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{background:var(--surface);border:none;padding:6px 11px;font-size:13px;color:var(--ink-3);border-right:1px solid var(--line)}
+.seg button:last-child{border-right:none}
+.seg button[aria-pressed="true"]{background:var(--surface-2);color:var(--ink);font-weight:600}
+.search{flex:1;min-width:150px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:7px 11px}
+
+.phase{background:var(--surface);border:1px solid var(--line);border-radius:12px;margin-bottom:12px;overflow:hidden}
+.phase-head{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line)}
+.phase-when{font-family:"IBM Plex Mono",monospace;font-size:10.5px;font-weight:600;color:var(--gold);background:var(--gold-bg);border-radius:5px;padding:3px 7px;white-space:nowrap}
+.phase-name{font-weight:600;font-size:14.5px;flex:1;min-width:0}
+.phase-prog{font-size:12px;color:var(--ink-3)}
+.task{display:flex;gap:11px;padding:11px 14px;border-bottom:1px solid var(--line);align-items:flex-start}
+.task:last-child{border-bottom:none}
+.task-check{flex:none;width:20px;height:20px;margin-top:2px;border-radius:6px;border:1.5px solid var(--line-strong);background:var(--surface);padding:0;display:grid;place-items:center;color:transparent}
+.task-check[aria-checked="true"]{background:var(--ok);border-color:var(--ok);color:#fff}
+.task-check svg{width:11px;height:11px}
+.task-body{flex:1;min-width:0}
+.task-title{font-size:14.5px}
+.task-detail{font-size:12.5px;color:var(--ink-3);margin-top:1px}
+.task.done .task-title{color:var(--ink-3);text-decoration:line-through}
+.del{background:none;border:none;color:var(--ink-3);padding:2px 6px;font-size:16px;line-height:1;border-radius:6px;flex:none}
+.del:hover{color:var(--over)}
+
+.tablewrap{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:680px}
+th{text-align:left;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);font-weight:600;padding:10px 10px;border-bottom:1px solid var(--line);white-space:nowrap;position:sticky;top:0;background:var(--surface)}
+td{padding:5px 10px;border-bottom:1px solid var(--line)}
+tbody tr:last-child td{border-bottom:none}
+tfoot td{border-top:1px solid var(--line-strong);font-weight:600;padding:10px;background:var(--surface-2)}
+td.r,th.r,tfoot td.r{text-align:right}
+.cell{background:transparent;border:1px solid transparent;border-radius:6px;padding:5px 6px;width:100%;min-width:64px}
+.cell:focus{outline:none;border-color:var(--lacquer);background:var(--ground)}
+.cell.r{text-align:right}
+.rsvp{border:1px solid var(--line-strong);border-radius:999px;padding:3px 10px;font-size:12.5px;font-weight:600;background:var(--surface);white-space:nowrap}
+.rsvp[data-v="มา"]{color:var(--ok);border-color:var(--ok)}
+.rsvp[data-v="ไม่มา"]{color:var(--ink-3)}
+.rsvp[data-v="รอตอบ"]{color:var(--warn);border-color:var(--warn)}
+.empty{padding:30px 14px;text-align:center;color:var(--ink-3);font-size:14px}
+.note{font-size:12.5px;color:var(--ink-3);margin-top:12px;line-height:1.7}
+.grpbar{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 11px;font-size:12.5px;color:var(--ink-2)}
+.chip[aria-pressed="true"]{background:var(--lacquer-bg);border-color:var(--lacquer);color:var(--lacquer);font-weight:600}
+
+dialog{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:14px;padding:0;width:min(420px,calc(100vw - 32px))}
+dialog::backdrop{background:rgba(10,18,15,.5)}
+.dlg-body{padding:20px}
+.dlg-body h3{font-family:"Chonburi",serif;font-weight:400;font-size:20px;margin:0 0 4px}
+.field{display:block;margin-top:13px}
+.field span{display:block;font-size:12px;font-weight:600;color:var(--ink-3);margin-bottom:4px}
+.field input{width:100%;background:var(--ground);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.dlg-foot{display:flex;gap:8px;justify-content:flex-end;padding:13px 20px;border-top:1px solid var(--line);background:var(--surface-2)}
+#toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(140%);background:var(--ink);color:var(--ground);
+  padding:9px 16px;border-radius:999px;font-size:13.5px;transition:transform .25s;z-index:60;max-width:90vw}
+#toast.on{transform:translateX(-50%) translateY(0)}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<div id="gate">
+  <form class="gatecard" id="gateForm">
+    <h1>ขันหมากพร้อม</h1>
+    <p>แผนงานแต่งงาน บาส &amp; ตาล<br>ใส่รหัสเพื่อเข้าใช้งาน</p>
+    <input id="gateCode" type="password" inputmode="text" autocomplete="off" placeholder="รหัสเข้าใช้งาน" aria-label="รหัสเข้าใช้งาน">
+    <button type="submit">เข้าสู่แผนงาน</button>
+    <div id="gateErr" role="status"></div>
+  </form>
+</div>
+
+<div class="wrap" id="app" hidden>
+  <header>
+    <div class="eyebrow">แผนงานแต่งงาน · Wedding Planner</div>
+    <h1 class="title" id="couple">—</h1>
+    <div class="meta">
+      <span id="dateline">—</span><span class="dot">·</span>
+      <span id="venueline">—</span><span class="dot">·</span>
+      <button class="linkbtn" id="editBtn">แก้ไขรายละเอียดงาน</button>
+      <span id="who"></span>
+    </div>
+  </header>
+
+  <section class="stats" aria-label="สรุปภาพรวม">
+    <div class="stat"><div class="k">นับถอยหลัง</div><div class="v num" id="s-days">—</div><div class="s" id="s-days-sub">วัน</div></div>
+    <div class="stat"><div class="k">เช็คลิสต์</div><div class="v num" id="s-task">—</div><div class="s">งานที่เสร็จแล้ว</div><div class="bar"><i id="s-task-bar"></i></div></div>
+    <div class="stat"><div class="k">แขก (ที่นั่ง)</div><div class="v num" id="s-guest">—</div><div class="s" id="s-guest-sub">ยืนยันแล้ว</div><div class="bar gold"><i id="s-guest-bar"></i></div></div>
+    <div class="stat"><div class="k">งบประมาณ</div><div class="v num" id="s-cost">—</div><div class="s" id="s-cost-sub">จ่ายจริง / งบรวม</div><div class="bar" id="s-cost-barwrap"><i id="s-cost-bar"></i></div></div>
+  </section>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab" role="tab" id="tab-tasks" aria-selected="true" aria-controls="panel-tasks">เช็คลิสต์ <span class="num" id="c-tasks"></span></button>
+    <button class="tab" role="tab" id="tab-guests" aria-selected="false" aria-controls="panel-guests">รายชื่อแขก <span class="num" id="c-guests"></span></button>
+    <button class="tab" role="tab" id="tab-budget" aria-selected="false" aria-controls="panel-budget">ค่าใช้จ่าย <span class="num" id="c-budget"></span></button>
+  </nav>
+
+  <section class="panel" id="panel-tasks" role="tabpanel" aria-labelledby="tab-tasks">
+    <div class="toolbar">
+      <div class="seg" id="taskFilter">
+        <button data-f="all" aria-pressed="true">ทั้งหมด</button>
+        <button data-f="open" aria-pressed="false">ยังไม่เสร็จ</button>
+        <button data-f="done" aria-pressed="false">เสร็จแล้ว</button>
+      </div>
+      <div class="spacer"></div>
+      <button class="btn" data-export="tasks">ดาวน์โหลด CSV</button>
+    </div>
+    <div id="taskList"></div>
+  </section>
+
+  <section class="panel" id="panel-guests" role="tabpanel" aria-labelledby="tab-guests" hidden>
+    <div class="toolbar">
+      <input class="search" id="guestSearch" type="search" placeholder="ค้นหาชื่อ…" aria-label="ค้นหาชื่อแขก">
+      <button class="btn primary" id="addGuest">+ เพิ่มแขก</button>
+      <button class="btn" data-export="guests">CSV</button>
+    </div>
+    <div class="grpbar" id="guestGroups"></div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr>
+          <th style="width:26%">ชื่อ</th><th style="width:11%">ฝ่าย</th><th style="width:20%">กลุ่ม</th>
+          <th class="r" style="width:9%">ที่นั่ง</th><th style="width:13%">ตอบรับ</th><th class="r" style="width:13%">ซอง</th><th style="width:6%"></th>
+        </tr></thead>
+        <tbody id="guestBody"></tbody>
+        <tfoot><tr>
+          <td colspan="3">แสดง <span id="g-shown" class="num"></span> / ทั้งหมด <span id="g-count" class="num"></span> รายชื่อ</td>
+          <td class="r num" id="g-seats"></td><td id="g-rsvp" style="font-weight:500;font-size:12.5px"></td>
+          <td class="r num" id="g-gift"></td><td></td>
+        </tr></tfoot>
+      </table>
+    </div>
+    <p class="note">“ที่นั่ง” คือจำนวนคนที่มาจริงต่อหนึ่งรายชื่อ ใช้คำนวณจำนวนโต๊ะ (โต๊ะจีน 1 โต๊ะ = 10 ที่นั่ง) · แตะปุ่มตอบรับเพื่อสลับ รอตอบ → มา → ไม่มา</p>
+  </section>
+
+  <section class="panel" id="panel-budget" role="tabpanel" aria-labelledby="tab-budget" hidden>
+    <div class="toolbar">
+      <button class="btn primary" id="addCost">+ เพิ่มรายการ</button>
+      <div class="spacer"></div>
+      <button class="btn" data-export="costs">ดาวน์โหลด CSV</button>
+    </div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr>
+          <th style="width:15%">หมวด</th><th style="width:25%">รายการ</th><th style="width:16%">ผู้ให้บริการ</th>
+          <th class="r" style="width:13%">ประมาณการ</th><th class="r" style="width:13%">มัดจำแล้ว</th><th class="r" style="width:13%">จ่ายจริง</th><th style="width:5%"></th>
+        </tr></thead>
+        <tbody id="costBody"></tbody>
+        <tfoot><tr><td colspan="3">รวมทั้งหมด</td>
+          <td class="r num" id="b-est"></td><td class="r num" id="b-dep"></td><td class="r num" id="b-act"></td><td></td></tr></tfoot>
+      </table>
+    </div>
+    <p class="note" id="budgetNote"></p>
+  </section>
+</div>
+
+<dialog id="cfgDlg"><form method="dialog">
+  <div class="dlg-body">
+    <h3>รายละเอียดงาน</h3>
+    <label class="field"><span>ชื่อเจ้าบ่าว</span><input id="f-groom" type="text"></label>
+    <label class="field"><span>ชื่อเจ้าสาว</span><input id="f-bride" type="text"></label>
+    <label class="field"><span>วันจัดงาน</span><input id="f-date" type="date"></label>
+    <label class="field"><span>สถานที่</span><input id="f-venue" type="text"></label>
+    <label class="field"><span>งบประมาณรวม (บาท)</span><input id="f-budget" type="number" step="1000"></label>
+    <label class="field"><span>เป้าหมายจำนวนแขก (ที่นั่ง)</span><input id="f-target" type="number" step="10"></label>
+  </div>
+  <div class="dlg-foot"><button class="btn" value="cancel">ยกเลิก</button><button class="btn primary" value="save">บันทึก</button></div>
+</form></dialog>
+
+<div id="toast" role="status"></div>
+<script type="module" src="./app.js"></script>
+</body>
+</html>
