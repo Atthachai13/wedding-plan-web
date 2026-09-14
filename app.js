@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 import { getAuth, signInAnonymously, onAuthStateChanged }
   from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-import { getFirestore, collection, doc, onSnapshot, setDoc, updateDoc, deleteDoc, getDocs, writeBatch }
+import { getFirestore, collection, doc, onSnapshot, setDoc, updateDoc, deleteDoc }
   from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 import { firebaseConfig, ACCESS_CODE } from "./firebase-config.js";
 
@@ -32,6 +32,7 @@ const KEY = "kmp.unlocked";
 function unlock() {
   $("gate").remove();
   $("app").hidden = false;
+  requestAnimationFrame(moveTabIndicator);
   start();
 }
 try { if (localStorage.getItem(KEY) === ACCESS_CODE) unlock(); } catch {}
@@ -135,7 +136,8 @@ function renderStats() {
 
   const done = tasks.filter(t => t.done).length;
   $("s-task").innerHTML = done + ' <small>/ ' + tasks.length + '</small>';
-  $("s-task-bar").style.width = (tasks.length ? done / tasks.length * 100 : 0) + "%";
+  const taskPct = tasks.length ? done / tasks.length * 100 : 0;
+  $("s-task-ring").style.strokeDashoffset = (100 - taskPct);
 
   let conf = 0, inv = 0;
   guests.forEach(g => { inv += n(g.seats); if (g.rsvp === "มา") conf += n(g.seats); });
@@ -150,6 +152,10 @@ function renderStats() {
   $("s-cost-bar").style.width = Math.min(100, cfg.budget ? act / cfg.budget * 100 : 0) + "%";
   $("s-cost-barwrap").className = "bar" + (act > cfg.budget ? " over" : "");
   $("s-cost-sub").textContent = "จ่ายจริง / งบรวม · ประมาณการ " + money(est);
+  const costRemain = est - act;
+  const remainEl = $("s-cost-remain");
+  remainEl.textContent = "คงเหลือที่ต้องจ่าย " + money(Math.max(0, costRemain)) + " บาท";
+  remainEl.style.color = costRemain > 0 ? "var(--warn)" : "var(--ok)";
 
   $("c-tasks").textContent = tasks.length ? `(${done}/${tasks.length})` : "";
   $("c-guests").textContent = guests.length ? `(${guests.length})` : "";
@@ -160,7 +166,7 @@ function renderStats() {
 const CHECK = '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1.5 6.2 4.4 9 10.5 2.6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 function renderTasks() {
   const host = $("taskList");
-  if (!tasks.length) { host.innerHTML = `<div class="phase"><div class="empty">${ready ? "ยังไม่มีรายการ" : "กำลังโหลด…"}</div></div>`; return; }
+  if (!tasks.length) { host.innerHTML = `<div class="phase"><div class="empty">${ready ? "ยังไม่มีรายการ" : '<span class="spin"></span>กำลังโหลด…'}</div></div>`; return; }
   const phases = [], map = {};
   tasks.slice().sort((a, b) => (n(a.phaseOrder) - n(b.phaseOrder)) || (n(a.order) - n(b.order)))
     .forEach(t => {
@@ -176,7 +182,7 @@ function renderTasks() {
     html += `<section class="phase"><div class="phase-head">
       <span class="phase-when">${esc(p.when)}</span>
       <span class="phase-name">${esc(p.name)}</span>
-      <span class="phase-prog num">${d}/${p.items.length}</span></div>`;
+      <span class="phase-prog num${d === p.items.length && p.items.length ? " done" : ""}">${d}/${p.items.length}</span></div>`;
     for (const t of shown) {
       if (editingTask === t.id) {
         html += `<div class="task editing">
@@ -215,6 +221,7 @@ function sortRows(list, sort) {
   return list.slice().sort((x, y) => {
     let r;
     if (sort.k === "rsvp") r = (RSVP_RANK[x.rsvp] ?? 9) - (RSVP_RANK[y.rsvp] ?? 9);
+    else if (sort.k === "remain") r = (n(x.estimate) - n(x.actual)) - (n(y.estimate) - n(y.actual));
     else if (NUM_KEYS.includes(sort.k)) r = n(x[sort.k]) - n(y[sort.k]);
     else r = collator.compare(String(x[sort.k] ?? ""), String(y[sort.k] ?? ""));
     return r * sort.d;
@@ -260,6 +267,23 @@ function warnDup(name, selfId) {
 }
 function renderGuests() {
   const dup = dupInfo();
+
+  let seatsYes = 0, seatsWait = 0, seatsNo = 0;
+  guests.forEach(g => { const s = n(g.seats);
+    if (g.rsvp === "มา") seatsYes += s; else if (g.rsvp === "ไม่มา") seatsNo += s; else seatsWait += s; });
+  const totalSeats = seatsYes + seatsWait + seatsNo;
+  $("rsvpChart").innerHTML = totalSeats ? `
+    <div class="rsvpbar">
+      <span class="yes" style="width:${seatsYes / totalSeats * 100}%"></span>
+      <span class="wait" style="width:${seatsWait / totalSeats * 100}%"></span>
+      <span class="no" style="width:${seatsNo / totalSeats * 100}%"></span>
+    </div>
+    <div class="rsvplegend">
+      <span class="lg"><i style="background:var(--ok)"></i>มา ${THB.format(seatsYes)} ที่นั่ง</span>
+      <span class="lg"><i style="background:var(--warn)"></i>รอตอบ ${THB.format(seatsWait)} ที่นั่ง</span>
+      <span class="lg"><i style="background:var(--ink-3)"></i>ไม่มา ${THB.format(seatsNo)} ที่นั่ง</span>
+    </div>` : "";
+
   const groups = [...new Set(guests.map(g => g.group).filter(Boolean))].sort();
   $("guestGroups").innerHTML =
     `<button class="chip" data-grp="__all" aria-pressed="${guestGroup === "__all"}">ทั้งหมด</button>` +
@@ -284,7 +308,7 @@ function renderGuests() {
     <td><button class="rsvp" data-rsvp="${g.id}" data-v="${esc(g.rsvp || "รอตอบ")}">${esc(g.rsvp || "รอตอบ")}</button></td>
     <td class="r"><input class="cell r num" id="gf-${g.id}" type="number" min="0" step="100" data-f="guests:${g.id}:gift#" value="${n(g.gift)}"></td>
     <td><button class="del" data-del="guests:${g.id}" aria-label="ลบรายชื่อ">&times;</button></td></tr>`).join("")
-    : `<tr><td colspan="7"><div class="empty">${ready ? "ไม่พบรายชื่อในมุมมองนี้" : "กำลังโหลด…"}</div></td></tr>`;
+    : `<tr><td colspan="7"><div class="empty">${ready ? "ไม่พบรายชื่อในมุมมองนี้" : '<span class="spin"></span>กำลังโหลด…'}</div></div></td></tr>`;
 
   let seats = 0, gift = 0, yes = 0, no = 0, wait = 0;
   guests.forEach(g => { seats += n(g.seats); gift += n(g.gift);
@@ -298,6 +322,17 @@ function renderGuests() {
 
 /* ---------- budget ---------- */
 function renderCosts() {
+  const byCat = {};
+  costs.forEach(c => { const k = c.category || "อื่น ๆ"; const v = n(c.actual) || n(c.estimate); byCat[k] = (byCat[k] || 0) + v; });
+  const catRows = Object.entries(byCat).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
+  const catMax = catRows.length ? catRows[0][1] : 1;
+  $("budgetChart").innerHTML = catRows.length ? catRows.map(([k, v]) => `
+    <div class="budgetrow">
+      <div class="lbl">${esc(k)}</div>
+      <div class="track"><i style="width:${Math.max(3, v / catMax * 100)}%"></i></div>
+      <div class="amt num">${money(v)}</div>
+    </div>`).join("") : "";
+
   const list = costSort.k
     ? sortRows(costs, costSort)
     : costs.slice().sort((a, b) => n(a.order) - n(b.order));
@@ -309,12 +344,14 @@ function renderCosts() {
     <td class="r"><input class="cell r num" id="ce-${c.id}" type="number" step="500" data-f="costs:${c.id}:estimate#" value="${n(c.estimate)}"></td>
     <td class="r"><input class="cell r num" id="cd-${c.id}" type="number" step="500" data-f="costs:${c.id}:deposit#" value="${n(c.deposit)}"></td>
     <td class="r"><input class="cell r num" id="ca-${c.id}" type="number" step="500" data-f="costs:${c.id}:actual#" value="${n(c.actual)}"></td>
+    <td class="r num" style="color:${(n(c.estimate) - n(c.actual)) > 0 ? "var(--warn)" : "var(--ok)"}">${money(n(c.estimate) - n(c.actual))}</td>
     <td><button class="del" data-del="costs:${c.id}" aria-label="ลบรายการ">&times;</button></td></tr>`).join("")
-    : `<tr><td colspan="7"><div class="empty">${ready ? "ยังไม่มีรายการ" : "กำลังโหลด…"}</div></td></tr>`;
+    : `<tr><td colspan="8"><div class="empty">${ready ? "ยังไม่มีรายการ" : '<span class="spin"></span>กำลังโหลด…'}</div></td></tr>`;
 
   let est = 0, dep = 0, act = 0;
   costs.forEach(c => { est += n(c.estimate); dep += n(c.deposit); act += n(c.actual); });
   $("b-est").textContent = money(est); $("b-dep").textContent = money(dep); $("b-act").textContent = money(act);
+  $("b-remain").textContent = money(est - act);
   $("budgetNote").textContent =
     `คงเหลือจากงบ ${money(cfg.budget - act)} บาท · ยอดที่ยังต้องจ่ายตามประมาณการอีกราว ${money(Math.max(0, est - act))} บาท` +
     (est > cfg.budget ? ` — ประมาณการรวมสูงกว่างบที่ตั้งไว้ ${money(est - cfg.budget)} บาท` : "");
@@ -417,13 +454,27 @@ document.addEventListener("keydown", (e) => {
   } else if (el.dataset?.f) el.blur();
 });
 
+function moveTabIndicator() {
+  const on = document.querySelector('.tab[aria-selected="true"]');
+  const ind = $("tabInd");
+  if (!on || !ind) return;
+  ind.style.left = on.offsetLeft + "px";
+  ind.style.width = on.offsetWidth + "px";
+}
 function selectTab(id) {
   ["tasks", "guests", "budget"].forEach(k => {
     const tb = $("tab-" + k), pn = $("panel-" + k);
     const on = tb.id === id;
-    tb.setAttribute("aria-selected", String(on)); pn.hidden = !on;
+    tb.setAttribute("aria-selected", String(on));
+    if (on) {
+      pn.hidden = false;
+      pn.classList.add("enter");
+      requestAnimationFrame(() => requestAnimationFrame(() => pn.classList.remove("enter")));
+    } else pn.hidden = true;
   });
+  moveTabIndicator();
 }
+window.addEventListener("resize", () => moveTabIndicator());
 
 /* ---------- config dialog ---------- */
 const dlg = $("cfgDlg");
@@ -465,7 +516,7 @@ function exportCsv(kind) {
       costs.slice().sort((a, b) => n(a.order) - n(b.order))
         .map(c => [c.category || "", c.item || "", c.vendor || "", n(c.estimate), n(c.deposit), n(c.actual)]));
   }
-  const csv = "\ufeff" + rows.map(r => r.map(q).join(",")).join("\r\n");
+  const csv = "﻿" + rows.map(r => r.map(q).join(",")).join("\r\n");
   const url = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
   const a = document.createElement("a");
   a.href = url; a.download = name; a.click();
