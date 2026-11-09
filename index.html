@@ -339,18 +339,22 @@ dialog::backdrop{background:rgba(10,18,15,.5)}
     <div class="tablewrap">
       <table id="costTable">
         <thead><tr>
-          <th class="sortable" data-sort="category" style="width:13%">หมวด<span class="arw">↕</span></th>
-          <th class="sortable" data-sort="item" style="width:19%">รายการ<span class="arw">↕</span></th>
-          <th class="sortable" data-sort="vendor" style="width:14%">ผู้ให้บริการ<span class="arw">↕</span></th>
-          <th class="r sortable" data-sort="estimate" style="width:12%">ประมาณการ<span class="arw">↕</span></th>
-          <th class="r sortable" data-sort="deposit" style="width:12%">มัดจำแล้ว<span class="arw">↕</span></th>
-          <th class="r sortable" data-sort="actual" style="width:12%">จ่ายจริง<span class="arw">↕</span></th>
-          <th class="r sortable" data-sort="remain" style="width:13%">คงเหลือ<span class="arw">↕</span></th>
-          <th style="width:5%"></th>
+          <th class="sortable" data-sort="category" style="width:11%">หมวด<span class="arw">↕</span></th>
+          <th class="sortable" data-sort="item" style="width:15%">รายการ<span class="arw">↕</span></th>
+          <th class="sortable" data-sort="vendor" style="width:11%">ผู้ให้บริการ<span class="arw">↕</span></th>
+          <th class="r sortable" data-sort="estimate" style="width:10%">ประมาณการ<span class="arw">↕</span></th>
+          <th class="r sortable" data-sort="deposit" style="width:9%">มัดจำแล้ว<span class="arw">↕</span></th>
+          <th class="r sortable" data-sort="actual" style="width:9%">จ่ายจริง<span class="arw">↕</span></th>
+          <th class="r sortable" data-sort="basPaid" style="width:9%">บาสจ่าย<span class="arw">↕</span></th>
+          <th class="r sortable" data-sort="talPaid" style="width:9%">ตาลจ่าย<span class="arw">↕</span></th>
+          <th class="r sortable" data-sort="remain" style="width:11%">คงเหลือ<span class="arw">↕</span></th>
+          <th style="width:4%"></th>
         </tr></thead>
         <tbody id="costBody"></tbody>
         <tfoot><tr><td colspan="3">รวมทั้งหมด</td>
-          <td class="r num" id="b-est"></td><td class="r num" id="b-dep"></td><td class="r num" id="b-act"></td><td class="r num" id="b-remain"></td><td></td></tr></tfoot>
+          <td class="r num" id="b-est"></td><td class="r num" id="b-dep"></td><td class="r num" id="b-act"></td>
+          <td class="r num" id="b-bas"></td><td class="r num" id="b-tal"></td>
+          <td class="r num" id="b-remain"></td><td></td></tr></tfoot>
       </table>
     </div>
     <p class="note" id="budgetNote"></p>
@@ -371,6 +375,6 @@ dialog::backdrop{background:rgba(10,18,15,.5)}
 </form></dialog>
 
 <div id="toast" role="status"></div>
-<script type="module" src="./app.js?v=6"></script>
+<script type="module" src="./app.js?v=7"></script>
 </body>
 </html>
