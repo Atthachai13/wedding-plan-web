@@ -213,7 +213,7 @@ function renderTasks() {
 
 /* ---------- การเรียงลำดับตามหัวคอลัมน์ ---------- */
 const collator = new Intl.Collator("th", { numeric: true, sensitivity: "base" });
-const NUM_KEYS = ["seats", "gift", "estimate", "deposit", "actual", "order"];
+const NUM_KEYS = ["seats", "gift", "estimate", "deposit", "actual", "basPaid", "talPaid", "order"];
 const RSVP_RANK = { "มา": 0, "รอตอบ": 1, "ไม่มา": 2 };
 
 function sortRows(list, sort) {
@@ -344,13 +344,16 @@ function renderCosts() {
     <td class="r"><input class="cell r num" id="ce-${c.id}" type="number" step="500" data-f="costs:${c.id}:estimate#" value="${n(c.estimate)}"></td>
     <td class="r"><input class="cell r num" id="cd-${c.id}" type="number" step="500" data-f="costs:${c.id}:deposit#" value="${n(c.deposit)}"></td>
     <td class="r"><input class="cell r num" id="ca-${c.id}" type="number" step="500" data-f="costs:${c.id}:actual#" value="${n(c.actual)}"></td>
+    <td class="r"><input class="cell r num" id="cb-${c.id}" type="number" step="500" data-f="costs:${c.id}:basPaid#" value="${n(c.basPaid)}"></td>
+    <td class="r"><input class="cell r num" id="ct-${c.id}" type="number" step="500" data-f="costs:${c.id}:talPaid#" value="${n(c.talPaid)}"></td>
     <td class="r num" style="color:${(n(c.estimate) - n(c.actual)) > 0 ? "var(--warn)" : "var(--ok)"}">${money(n(c.estimate) - n(c.actual))}</td>
     <td><button class="del" data-del="costs:${c.id}" aria-label="ลบรายการ">&times;</button></td></tr>`).join("")
-    : `<tr><td colspan="8"><div class="empty">${ready ? "ยังไม่มีรายการ" : '<span class="spin"></span>กำลังโหลด…'}</div></td></tr>`;
+    : `<tr><td colspan="10"><div class="empty">${ready ? "ยังไม่มีรายการ" : '<span class="spin"></span>กำลังโหลด…'}</div></td></tr>`;
 
-  let est = 0, dep = 0, act = 0;
-  costs.forEach(c => { est += n(c.estimate); dep += n(c.deposit); act += n(c.actual); });
+  let est = 0, dep = 0, act = 0, bas = 0, tal = 0;
+  costs.forEach(c => { est += n(c.estimate); dep += n(c.deposit); act += n(c.actual); bas += n(c.basPaid); tal += n(c.talPaid); });
   $("b-est").textContent = money(est); $("b-dep").textContent = money(dep); $("b-act").textContent = money(act);
+  $("b-bas").textContent = money(bas); $("b-tal").textContent = money(tal);
   $("b-remain").textContent = money(est - act);
   $("budgetNote").textContent =
     `คงเหลือจากงบ ${money(cfg.budget - act)} บาท · ยอดที่ยังต้องจ่ายตามประมาณการอีกราว ${money(Math.max(0, est - act))} บาท` +
@@ -413,7 +416,7 @@ document.addEventListener("click", (e) => {
   }
   if (t.id === "addCost") {
     let m = 0; costs.forEach(c => m = Math.max(m, n(c.order)));
-    const id = create("costs", { category:"อื่น ๆ", item:"", vendor:"", estimate:0, deposit:0, actual:0, order:m + 1 });
+    const id = create("costs", { category:"อื่น ๆ", item:"", vendor:"", estimate:0, deposit:0, actual:0, basPaid:0, talPaid:0, order:m + 1 });
     $("ci-" + id)?.focus(); return;
   }
   if (t.id === "editBtn") { openCfg(); return; }
@@ -512,9 +515,9 @@ function exportCsv(kind) {
       guests.map(g => [g.name || "", g.side || "", g.group || "", n(g.seats), g.rsvp || "รอตอบ", n(g.gift)]));
   } else {
     name = "budget.csv";
-    rows = [["หมวด","รายการ","ผู้ให้บริการ","ประมาณการ","มัดจำแล้ว","จ่ายจริง"]].concat(
+    rows = [["หมวด","รายการ","ผู้ให้บริการ","ประมาณการ","มัดจำแล้ว","จ่ายจริง","บาสจ่าย","ตาลจ่าย"]].concat(
       costs.slice().sort((a, b) => n(a.order) - n(b.order))
-        .map(c => [c.category || "", c.item || "", c.vendor || "", n(c.estimate), n(c.deposit), n(c.actual)]));
+        .map(c => [c.category || "", c.item || "", c.vendor || "", n(c.estimate), n(c.deposit), n(c.actual), n(c.basPaid), n(c.talPaid)]));
   }
   const csv = "﻿" + rows.map(r => r.map(q).join(",")).join("\r\n");
   const url = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
